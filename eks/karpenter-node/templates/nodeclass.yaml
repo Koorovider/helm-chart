@@ -1,0 +1,37 @@
+{{- range .Values.nodeClasses }}
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: "{{ .name }}"
+spec:
+  amiSelectorTerms:
+    {{- range .amiSelectorTerms }}
+    - alias: "{{ .alias }}"  # range 사용 시 중첩된 리스트 처리
+    {{- end }}
+  role: "{{ $.Values.NODE_IAM_ROLE_ARN }}"  # 최상위 값 접근
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "{{ $.Values.CLUSTER_NAME }}"  # 최상위 값 접근
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "{{ $.Values.CLUSTER_NAME }}"  # 최상위 값 접근
+  blockDeviceMappings:
+    {{- range .blockDeviceMappings }}
+    - deviceName: {{ .deviceName }}
+      ebs:
+        volumeSize: {{ .ebs.volumeSize }}
+        volumeType: {{ .ebs.volumeType }}
+        iops: {{ .ebs.iops }}
+        throughput: {{ .ebs.throughput }}
+        encrypted: {{ .ebs.encrypted }}
+        deleteOnTermination: {{ .ebs.deleteOnTermination }}
+    {{- end }}
+  userData: |
+    #!/bin/bash
+    {{ .userData | indent 4 }} 
+  tags:
+    {{- range $key, $value := .tags }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+---
+{{- end }}

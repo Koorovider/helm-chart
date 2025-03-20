@@ -1,0 +1,48 @@
+nodePools:
+  - name: default-nodepool
+    requirements:
+      - key: kubernetes.io/arch
+        operator: In
+        values: ["amd64"]
+      - key: kubernetes.io/os
+        operator: In
+        values: ["linux"]
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values: ["on-demand"]
+      - key: karpenter.k8s.aws/instance-category
+        operator: In
+        values: ["c", "m", "r"]
+      - key: karpenter.k8s.aws/instance-generation
+        operator: Gt
+        values: ["2"]
+    nodeClassRef:
+      group: karpenter.k8s.aws
+      kind: EC2NodeClass
+      name: default-nodeclass
+    expireAfter: 4h
+    limits:
+      cpu: 10
+    disruption:
+      consolidationPolicy: WhenEmptyOrUnderutilized
+      consolidateAfter: 1m
+
+nodeClasses:
+  - name: "default-nodeclass"
+    amiSelectorTerms:
+      - alias: al2023@latest
+    blockDeviceMappings:
+      - deviceName: /dev/xvda
+        ebs:
+          volumeSize: 50Gi           # 볼륨 크기
+          volumeType: gp3          # 볼륨 타입
+          iops: 3000                 # IOPS (정수형)
+          throughput: 125            # 처리량 (정수형)
+          encrypted: true            # 암호화 여부 (불리언형)
+          deleteOnTermination: true  # 종료 시 삭제 여부 (불리언형)
+    userData: |
+      echo "Welcome to the team!"
+      echo "Hello"
+    tags:
+      intent: apps
+      eks-immersion-team: my-team

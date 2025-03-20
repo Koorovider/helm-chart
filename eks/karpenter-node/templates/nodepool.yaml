@@ -1,0 +1,26 @@
+{{- range .Values.nodePools }}
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: {{ .name }}
+spec:
+  template:
+    spec:
+      requirements:
+        {{- range .requirements }}
+        - key: {{ .key }}
+          operator: {{ .operator }}
+          values: {{ .values | toYaml | nindent 12 }}
+        {{- end }}
+      nodeClassRef:
+        group: {{ .nodeClassRef.group }}
+        kind: {{ .nodeClassRef.kind }}
+        name: {{ .nodeClassRef.name }}
+      expireAfter: {{ .expireAfter }}
+  limits:
+    cpu: {{ .limits.cpu }}
+  disruption:
+    consolidationPolicy: {{ .disruption.consolidationPolicy }}
+    consolidateAfter: {{ .disruption.consolidateAfter }}
+---
+{{- end }}
